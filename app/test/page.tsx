@@ -7,59 +7,151 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
+import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
 
-// Testfragen
+// Testfragen für Sekundarstufe (7.-9. Klasse)
 const questions = [
+  // Multiple Choice
   {
-    question: "Was ist die Hauptstadt von Deutschland?",
-    options: ["Berlin", "München", "Hamburg", "Köln"],
-    correct: "Berlin",
+    type: "multiple_choice",
+    question: "Welches chemische Element hat das Symbol 'Fe'?",
+    options: ["Eisen", "Fluor", "Ferrum", "Phosphor"],
+    correct: "Eisen",
   },
   {
-    question: "Wie viele Bundesländer hat Deutschland?",
-    options: ["12", "14", "16", "18"],
-    correct: "16",
+    type: "multiple_choice",
+    question: "Wer schrieb das Drama 'Wilhelm Tell'?",
+    options: ["Johann Wolfgang von Goethe", "Gotthold Ephraim Lessing", "Heinrich Heine", "Friedrich Schiller"],
+    correct: "Friedrich Schiller",
   },
   {
-    question: "Welches ist das größte Bundesland Deutschlands?",
-    options: ["Bayern", "Niedersachsen", "Baden-Württemberg", "Nordrhein-Westfalen"],
-    correct: "Bayern",
+    type: "multiple_choice",
+    question: "Wie viele Planeten hat unser Sonnensystem?",
+    options: ["7", "8", "9", "10"],
+    correct: "8",
+  },
+  
+  // Lückentext
+  {
+    type: "fill_in_blank",
+    question: "Die Formel für die Berechnung der Fläche eines Rechtecks lautet: A = ___ × ___",
+    correctAnswers: ["länge", "breite"],
+    placeholders: 2,
+    hint: "Zwei Seitenlängen werden multipliziert"
   },
   {
-    question: "In welchem Jahr fiel die Berliner Mauer?",
-    options: ["1987", "1989", "1991", "1993"],
-    correct: "1989",
+    type: "fill_in_blank",
+    question: "Der grösste Ozean der Erde ist der ___-Ozean.",
+    correctAnswers: ["pazifische", "pazifischer", "pazifik"],
+    placeholders: 1,
   },
   {
-    question: "Welcher Fluss fließt durch Berlin?",
-    options: ["Rhein", "Elbe", "Spree", "Donau"],
-    correct: "Spree",
+    type: "fill_in_blank",
+    question: "Die drei Aggregatzustände von Wasser sind: fest (___), flüssig (___) und gasförmig (___).",
+    correctAnswers: ["eis", "wasser", "wasserdampf"],
+    placeholders: 3,
+  },
+  
+  // Zuordnung (Matching) - Optionen absichtlich in anderer Reihenfolge anzeigen
+  {
+    type: "matching",
+    question: "Ordne die Hauptstädte den Ländern zu:",
+    options: ["Madrid", "Paris", "Warschau", "Rom"],
+    pairs: [
+      { left: "Frankreich", right: "Paris" },
+      { left: "Italien", right: "Rom" },
+      { left: "Spanien", right: "Madrid" },
+      { left: "Polen", right: "Warschau" },
+    ],
   },
   {
-    question: "Wie heißt der höchste Berg Deutschlands?",
-    options: ["Zugspitze", "Watzmann", "Feldberg", "Brocken"],
-    correct: "Zugspitze",
+    type: "matching",
+    question: "Ordne die mathematischen Begriffe den Formeln zu:",
+    options: ["πr²", "(g × h) / 2", "a × b", "2πr"],
+    pairs: [
+      { left: "Kreisumfang", right: "2πr" },
+      { left: "Kreisfläche", right: "πr²" },
+      { left: "Rechteckfläche", right: "a × b" },
+      { left: "Dreiecksfläche", right: "(g × h) / 2" },
+    ],
   },
+  
+  // Weitere Multiple Choice
   {
-    question: "Welche Farben hat die deutsche Flagge?",
-    options: ["Schwarz, Rot, Gold", "Schwarz, Rot, Gelb", "Rot, Weiß, Schwarz", "Blau, Weiß, Rot"],
-    correct: "Schwarz, Rot, Gold",
+    type: "multiple_choice",
+    question: "Was bedeutet 'Photosynthese'?",
+    options: [
+      "Zellatmung bei Tieren",
+      "Umwandlung von Lichtenergie in chemische Energie",
+      "Fortpflanzung von Pflanzen",
+      "Wasseraufnahme durch Wurzeln"
+    ],
+    correct: "Umwandlung von Lichtenergie in chemische Energie",
   },
+  
+  // Reihenfolge - mit gemischten Options
   {
-    question: "Wer war der erste Bundeskanzler der Bundesrepublik Deutschland?",
-    options: ["Willy Brandt", "Konrad Adenauer", "Helmut Kohl", "Helmut Schmidt"],
-    correct: "Konrad Adenauer",
+    type: "ordering",
+    question: "Bringe die folgenden historischen Ereignisse in die richtige zeitliche Reihenfolge:",
+    options: [
+      "Französische Revolution",
+      "Erster Weltkrieg",
+      "Erfindung des Buchdrucks",
+      "Entdeckung Amerikas durch Kolumbus"
+    ],
+    correctOrder: [
+      "Erfindung des Buchdrucks",
+      "Entdeckung Amerikas durch Kolumbus",
+      "Französische Revolution",
+      "Erster Weltkrieg"
+    ],
   },
+
+  
+  // Lückentext
   {
-    question: "Welche Stadt ist bekannt für das Oktoberfest?",
-    options: ["Berlin", "Hamburg", "München", "Frankfurt"],
-    correct: "München",
+    type: "fill_in_blank",
+    question: "In einem rechtwinkligen Dreieck lautet der Satz des Pythagoras: a² + b² = ___",
+    correctAnswers: ["c²", "c2", "c hoch 2", "c squared", "c^2"],
+    placeholders: 1,
   },
+  
+  // Multiple Choice
   {
-    question: "Wie viele Nachbarländer hat Deutschland?",
-    options: ["7", "9", "11", "13"],
-    correct: "9",
+    type: "multiple_choice",
+    question: "Welche Wortart ist das Wort 'schnell'?",
+    options: ["Nomen", "Verb", "Adjektiv", "Präposition"],
+    correct: "Adjektiv",
+  },
+  
+  // Zuordnung
+  {
+    type: "matching",
+    question: "Ordne die Organe ihren Funktionen zu:",
+    options: ["Nimmt Sauerstoff auf", "Entgiftet den Körper", "Pumpt Blut durch den Körper", "Verdaut Nahrung"],
+    pairs: [
+      { left: "Herz", right: "Pumpt Blut durch den Körper" },
+      { left: "Lunge", right: "Nimmt Sauerstoff auf" },
+      { left: "Leber", right: "Entgiftet den Körper" },
+      { left: "Magen", right: "Verdaut Nahrung" },
+    ],
+  },
+  
+  // Lückentext
+  {
+    type: "fill_in_blank",
+    question: "Die Hauptstadt der Schweiz ist ___.",
+    correctAnswers: ["bern"],
+    placeholders: 1,
+  },
+  
+  // Multiple Choice
+  {
+    type: "multiple_choice",
+    question: "Welche dieser Zahlen ist eine Primzahl?",
+    options: ["15", "21", "23", "27"],
+    correct: "23",
   },
 ]
 
@@ -71,6 +163,9 @@ function TestContent() {
 
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState("")
+  const [fillInAnswers, setFillInAnswers] = useState<string[]>([])
+  const [matchingAnswers, setMatchingAnswers] = useState<Record<string, string>>({})
+  const [orderingItems, setOrderingItems] = useState<string[]>([])
   const [questionStartTime, setQuestionStartTime] = useState(Date.now())
   const [tabSwitches, setTabSwitches] = useState(0)
   const [copyPasteEvents, setCopyPasteEvents] = useState(0)
@@ -79,6 +174,25 @@ function TestContent() {
   const [keyboardEvents, setKeyboardEvents] = useState(0)
 
   const supabase = createClient()
+  const currentQ = questions[currentQuestion]
+
+  // Reset answers when question changes
+  useEffect(() => {
+    setSelectedAnswer("")
+    setFillInAnswers([])
+    setMatchingAnswers({})
+
+    if (currentQ.type === "ordering") {
+      setOrderingItems((prev) => {
+        // Nur neu mischen, wenn noch leer
+        if (prev.length === 0) {
+          const shuffled = [...(currentQ as any).options].sort(() => Math.random() - 0.5)
+          return shuffled
+        }
+        return prev
+      })
+    }
+  }, [currentQuestion])
 
   // Verhaltens-Tracking: Tab-Wechsel
   useEffect(() => {
@@ -137,7 +251,6 @@ function TestContent() {
     const handleMouseMove = async () => {
       movementCount++
       if (movementCount % 50 === 0) {
-        // Alle 50 Bewegungen speichern
         setMouseMovements((prev) => prev + 1)
         await supabase.from("behavioral_data").insert({
           session_id: sessionId,
@@ -156,7 +269,6 @@ function TestContent() {
     const handleKeyDown = async () => {
       setKeyboardEvents((prev) => prev + 1)
       if (keyboardEvents % 10 === 0) {
-        // Alle 10 Tastendrücke speichern
         await supabase.from("behavioral_data").insert({
           session_id: sessionId,
           event_type: "keyboard_pattern",
@@ -169,25 +281,71 @@ function TestContent() {
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [sessionId, keyboardEvents, supabase])
 
+  const checkAnswer = () => {
+    const q = currentQ as any
+    
+    switch (q.type) {
+      case "multiple_choice":
+        return selectedAnswer === q.correct
+      
+      case "fill_in_blank":
+        return fillInAnswers.every((answer, index) => {
+          const normalized = answer.toLowerCase().trim()
+          const correctOptions = Array.isArray(q.correctAnswers[index]) 
+            ? q.correctAnswers[index] 
+            : [q.correctAnswers[index]]
+          return correctOptions.some((opt: string) => opt.toLowerCase() === normalized)
+        })
+      
+      case "matching":
+        return q.pairs.every((pair: any) => 
+          matchingAnswers[pair.left] === pair.right
+        )
+      
+      case "ordering":
+        return JSON.stringify(orderingItems) === JSON.stringify(q.correctOrder)
+      
+      default:
+        return false
+    }
+  }
+
+  const getCurrentAnswer = () => {
+    const q = currentQ as any
+    
+    switch (q.type) {
+      case "multiple_choice":
+        return selectedAnswer
+      case "fill_in_blank":
+        return fillInAnswers.join(", ")
+      case "matching":
+        return JSON.stringify(matchingAnswers)
+      case "ordering":
+        return orderingItems.join(" -> ")
+      default:
+        return ""
+    }
+  }
+
   const handleNextQuestion = async () => {
-    if (!selectedAnswer) {
-      alert("Bitte wählen Sie eine Antwort aus.")
+    const answer = getCurrentAnswer()
+    
+    if (!answer) {
+      alert("Bitte beantworte die Frage.")
       return
     }
 
     const responseTime = Date.now() - questionStartTime
-    const isCorrect = selectedAnswer === questions[currentQuestion].correct
+    const isCorrect = checkAnswer()
 
-    // Speichere Antwort
     await supabase.from("test_responses").insert({
       session_id: sessionId,
       question_number: currentQuestion + 1,
-      answer: selectedAnswer,
+      answer: answer,
       response_time: responseTime,
       is_correct: isCorrect,
     })
 
-    // Prüfe auf Zeit-Anomalien (zu schnell < 2s oder zu langsam > 60s)
     if (responseTime < 2000 || responseTime > 60000) {
       await supabase.from("behavioral_data").insert({
         session_id: sessionId,
@@ -196,7 +354,6 @@ function TestContent() {
       })
     }
 
-    // Speichere Antwortlatenz
     await supabase.from("behavioral_data").insert({
       session_id: sessionId,
       event_type: "response_latency",
@@ -205,21 +362,17 @@ function TestContent() {
 
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1)
-      setSelectedAnswer("")
       setQuestionStartTime(Date.now())
     } else {
-      // Test abgeschlossen
       await completeTest()
     }
   }
 
   const completeTest = async () => {
-    // Berechne Cheat-Score
     const { data: cheatScoreData } = await supabase.rpc("calculate_cheat_score", {
       p_session_id: sessionId,
     })
 
-    // Aktualisiere Session
     await supabase
       .from("test_sessions")
       .update({
@@ -229,8 +382,17 @@ function TestContent() {
       })
       .eq("id", sessionId)
 
-    // Navigiere zur Ergebnisseite
     router.push(`/results?sessionId=${sessionId}&participantId=${participantId}`)
+  }
+
+  const moveItem = (index: number, direction: "up" | "down") => {
+    const newItems = [...orderingItems]
+    const newIndex = direction === "up" ? index - 1 : index + 1
+    
+    if (newIndex >= 0 && newIndex < newItems.length) {
+      [newItems[index], newItems[newIndex]] = [newItems[newIndex], newItems[index]]
+      setOrderingItems(newItems)
+    }
   }
 
   const progress = ((currentQuestion + 1) / questions.length) * 100
@@ -246,17 +408,112 @@ function TestContent() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
-            <h3 className="text-xl font-semibold">{questions[currentQuestion].question}</h3>
-            <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer}>
-              {questions[currentQuestion].options.map((option, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`option-${index}`} />
-                  <Label htmlFor={`option-${index}`} className="cursor-pointer">
-                    {option}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+            <h3 className="text-xl font-semibold">{currentQ.question}</h3>
+
+            {/* Multiple Choice */}
+            {currentQ.type === "multiple_choice" && (
+              <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer}>
+                {(currentQ as any).options.map((option: string, index: number) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option} id={`option-${index}`} />
+                    <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            )}
+
+            {/* Fill in the Blank */}
+            {currentQ.type === "fill_in_blank" && (
+              <div className="space-y-3">
+                {(currentQ as any).hint && (
+                  <p className="text-sm text-muted-foreground italic">Hinweis: {(currentQ as any).hint}</p>
+                )}
+                {Array.from({ length: (currentQ as any).placeholders }).map((_, index) => (
+                  <div key={index}>
+                    <Label htmlFor={`blank-${index}`}>Lücke {index + 1}:</Label>
+                    <Input
+                      id={`blank-${index}`}
+                      value={fillInAnswers[index] || ""}
+                      onChange={(e) => {
+                        const newAnswers = [...fillInAnswers]
+                        newAnswers[index] = e.target.value
+                        setFillInAnswers(newAnswers)
+                      }}
+                      placeholder="Antwort eingeben..."
+                      className="mt-1"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Matching */}
+            {currentQ.type === "matching" && (
+              <div className="space-y-3">
+                {(currentQ as any).pairs.map((pair: any, index: number) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="flex-1 p-3 bg-blue-50 rounded-md font-medium">
+                      {pair.left}
+                    </div>
+                    <span className="text-muted-foreground">→</span>
+                    <select
+                      value={matchingAnswers[pair.left] || ""}
+                      onChange={(e) => setMatchingAnswers({
+                        ...matchingAnswers,
+                        [pair.left]: e.target.value
+                      })}
+                      className="flex-1 p-3 border rounded-md"
+                    >
+                      <option value="">Wähle...</option>
+                      {(currentQ as any).pairs.map((p: any, i: number) => (
+                        <option key={i} value={p.right}>{p.right}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Ordering */}
+            {currentQ.type === "ordering" && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Nutze die Pfeile, um die Elemente zu sortieren:
+                </p>
+                {orderingItems.map((item, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-muted-foreground w-6">
+                      {index + 1}.
+                    </span>
+                    <div className="flex-1 p-3 bg-slate-50 rounded-md">
+                      {item}
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => moveItem(index, "up")}
+                        disabled={index === 0}
+                        className="h-8 w-8 p-0"
+                      >
+                        ↑
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => moveItem(index, "down")}
+                        disabled={index === orderingItems.length - 1}
+                        className="h-8 w-8 p-0"
+                      >
+                        ↓
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <Button onClick={handleNextQuestion} className="w-full" size="lg">
