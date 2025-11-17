@@ -18,6 +18,9 @@ interface ParticipantResult {
 }
 
 export default function AdminDashboard() {
+  const ADMIN_PASSWORD = "idpaimst"
+  const [isAuthedAdmin, setIsAuthedAdmin] = useState(false)
+  const [adminPwInput, setAdminPwInput] = useState("")
   const [results, setResults] = useState<ParticipantResult[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -31,7 +34,15 @@ export default function AdminDashboard() {
   const supabase = createClient()
 
   useEffect(() => {
+    try {
+      const s = sessionStorage.getItem("admin-auth")
+      if (s === "true") setIsAuthedAdmin(true)
+    } catch (e) {
+      // ignore
+    }
+
     const fetchResults = async () => {
+      if (!isAuthedAdmin) return
       // Hole alle Test-Sitzungen mit Teilnehmer-Informationen
       const { data, error } = await supabase
         .from("test_sessions")
@@ -84,10 +95,50 @@ export default function AdminDashboard() {
 
     fetchResults()
 
-    // Auto-refresh alle 10 Sekunden
-    const interval = setInterval(fetchResults, 10000)
+    // Auto-refresh alle 10 Sekunden (nur wenn authed)
+    const interval = setInterval(() => {
+      if (isAuthedAdmin) fetchResults()
+    }, 10000)
     return () => clearInterval(interval)
-  }, [supabase])
+  }, [supabase, isAuthedAdmin])
+
+  const handleAdminPwSubmit = () => {
+    if (adminPwInput === ADMIN_PASSWORD) {
+      try {
+        sessionStorage.setItem("admin-auth", "true")
+      } catch (e) {
+        // ignore
+      }
+      setIsAuthedAdmin(true)
+    } else {
+      alert("Falsches Admin-Passwort.")
+    }
+  }
+
+  if (!isAuthedAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-xl">Adminbereich geschützt</CardTitle>
+            <CardDescription>Bitte Admin-Passwort eingeben.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <input
+              type="password"
+              placeholder="Admin-Passwort"
+              value={adminPwInput}
+              onChange={(e) => setAdminPwInput(e.target.value)}
+              className="w-full border rounded p-2"
+            />
+            <Button onClick={handleAdminPwSubmit} className="w-full">
+              Zugang
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   if (isLoading) {
     return (

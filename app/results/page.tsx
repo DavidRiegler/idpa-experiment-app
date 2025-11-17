@@ -14,10 +14,14 @@ interface SessionData {
 }
 
 function ResultsContent() {
+  const RESULTS_PASSWORD = "idpa2025"
   const searchParams = useSearchParams()
   const router = useRouter()
   const sessionId = searchParams.get("sessionId")
   const participantId = searchParams.get("participantId")
+
+  const [isAuthed, setIsAuthed] = useState(false)
+  const [pwInput, setPwInput] = useState("")
 
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
   const [deleteData, setDeleteData] = useState(false)
@@ -25,7 +29,17 @@ function ResultsContent() {
   const supabase = createClient()
 
   useEffect(() => {
+    // Prüfe, ob bereits ein Session-Auth-Token für Ergebnisse gesetzt ist
+    try {
+      const s = sessionStorage.getItem("results-auth")
+      if (s === "true") setIsAuthed(true)
+    } catch (e) {
+      // ignore
+    }
+
     const fetchSessionData = async () => {
+      if (!isAuthed) return
+
       const { data, error } = await supabase
         .from("test_sessions")
         .select("cheat_score, completed")
@@ -43,7 +57,20 @@ function ResultsContent() {
     if (sessionId) {
       fetchSessionData()
     }
-  }, [sessionId, supabase])
+  }, [sessionId, supabase, isAuthed])
+
+  const handlePwSubmit = () => {
+    if (pwInput === RESULTS_PASSWORD) {
+      try {
+        sessionStorage.setItem("results-auth", "true")
+      } catch (e) {
+        // ignore
+      }
+      setIsAuthed(true)
+    } else {
+      alert("Falsches Passwort.")
+    }
+  }
 
   const handleFinish = async () => {
     if (deleteData) {
@@ -57,6 +84,33 @@ function ResultsContent() {
     }
 
     router.push("/admin")
+  }
+
+  if (!isAuthed) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-xl">Ergebnisse geschützt</CardTitle>
+            <CardDescription>
+              BLEIBEN SIE BITTE AUF DER WEBSEITE. Warten Sie bitte auf die Prüfungsaufsicht um den Code zu deinen Resultaten zu erhalten.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <input
+              type="password"
+              placeholder="Passwort eingeben"
+              value={pwInput}
+              onChange={(e) => setPwInput(e.target.value)}
+              className="w-full border rounded p-2"
+            />
+            <Button onClick={handlePwSubmit} className="w-full">
+              Passwort prüfen
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (isLoading) {
