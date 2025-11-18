@@ -1,4 +1,5 @@
 "use client"
+
 import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { createClient } from "@/lib/supabase/client"
+
 // Testfragen für Sekundarstufe (7.-9. Klasse)
 const questions = [
   // Multiple Choice
@@ -105,6 +107,7 @@ const questions = [
       "Erster Weltkrieg"
     ],
   },
+
   
   // Lückentext
   {
@@ -152,58 +155,36 @@ const questions = [
   },
 ]
 
-// Hilfsfunktion zum Mischen eines Arrays
-const shuffleArray = (array: any[]) => {
-  const newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-  }
-  return newArray;
-};
-
-
 function TestContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const sessionId = searchParams.get("sessionId")
   const participantId = searchParams.get("participantId")
+
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState("")
   const [fillInAnswers, setFillInAnswers] = useState<string[]>([])
   const [matchingAnswers, setMatchingAnswers] = useState<Record<string, string>>({})
   const [orderingItems, setOrderingItems] = useState<string[]>([])
-  // NEU: State für die gemischten Matching-Optionen jeder Frage
-  const [shuffledMatchingOptions, setShuffledMatchingOptions] = useState<Record<number, string[]>>({});
   const [questionStartTime, setQuestionStartTime] = useState(Date.now())
   const [tabSwitches, setTabSwitches] = useState(0)
   const [copyPasteEvents, setCopyPasteEvents] = useState(0)
   const [focusLosses, setFocusLosses] = useState(0)
   const [mouseMovements, setMouseMovements] = useState(0)
   const [keyboardEvents, setKeyboardEvents] = useState(0)
+
   const supabase = createClient()
+  const currentQ = questions[currentQuestion]
 
-  const [shuffledQuestions] = useState(() => {
-    const array = [...questions]; // Erstellt eine Kopie des Original-Arrays
-    // Fisher-Yates (Durstenfeld) Misch-Algorithmus
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  });
-
-  const currentQ = shuffledQuestions[currentQuestion]
-
-  // Reset answers and shuffle options when question changes
+  // Reset answers when question changes
   useEffect(() => {
     setSelectedAnswer("")
     setFillInAnswers([])
     setMatchingAnswers({})
-    
-    // Logik für 'ordering' bleibt gleich (Optionen mischen)
+
     if (currentQ.type === "ordering") {
       setOrderingItems((prev) => {
+        // Nur neu mischen, wenn noch leer
         if (prev.length === 0) {
           const shuffled = [...(currentQ as any).options].sort(() => Math.random() - 0.5)
           return shuffled
@@ -211,19 +192,9 @@ function TestContent() {
         return prev
       })
     }
-    
-    // NEU: Matching-Optionen mischen und speichern
-    if (currentQ.type === "matching" && !(shuffledMatchingOptions as any)[currentQuestion]) {
-        const options = (currentQ as any).options;
-        setShuffledMatchingOptions(prev => ({
-            ...prev,
-            [currentQuestion]: shuffleArray(options)
-        }));
-    }
+  }, [currentQuestion])
 
-  }, [currentQuestion, currentQ, shuffledMatchingOptions])
-  
-  // Verhaltens-Tracking: Tab-Wechsel (bleibt gleich)
+  // Verhaltens-Tracking: Tab-Wechsel
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.hidden) {
@@ -235,10 +206,12 @@ function TestContent() {
         })
       }
     }
+
     document.addEventListener("visibilitychange", handleVisibilityChange)
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
   }, [sessionId, tabSwitches, supabase])
-  // Verhaltens-Tracking: Fokus-Verlust (bleibt gleich)
+
+  // Verhaltens-Tracking: Fokus-Verlust
   useEffect(() => {
     const handleBlur = async () => {
       setFocusLosses((prev) => prev + 1)
@@ -248,10 +221,12 @@ function TestContent() {
         data: { count: focusLosses + 1 },
       })
     }
+
     window.addEventListener("blur", handleBlur)
     return () => window.removeEventListener("blur", handleBlur)
   }, [sessionId, focusLosses, supabase])
-  // Verhaltens-Tracking: Copy/Paste (bleibt gleich)
+
+  // Verhaltens-Tracking: Copy/Paste
   useEffect(() => {
     const handleCopyPaste = async (e: ClipboardEvent) => {
       setCopyPasteEvents((prev) => prev + 1)
@@ -261,6 +236,7 @@ function TestContent() {
         data: { type: e.type, count: copyPasteEvents + 1 },
       })
     }
+
     document.addEventListener("copy", handleCopyPaste)
     document.addEventListener("paste", handleCopyPaste)
     return () => {
@@ -268,7 +244,8 @@ function TestContent() {
       document.removeEventListener("paste", handleCopyPaste)
     }
   }, [sessionId, copyPasteEvents, supabase])
-  // Verhaltens-Tracking: Mausbewegungen (bleibt gleich)
+
+  // Verhaltens-Tracking: Mausbewegungen
   useEffect(() => {
     let movementCount = 0
     const handleMouseMove = async () => {
@@ -282,10 +259,12 @@ function TestContent() {
         })
       }
     }
+
     document.addEventListener("mousemove", handleMouseMove)
     return () => document.removeEventListener("mousemove", handleMouseMove)
   }, [sessionId, supabase])
-  // Verhaltens-Tracking: Tastatur-Muster (bleibt gleich)
+
+  // Verhaltens-Tracking: Tastatur-Muster
   useEffect(() => {
     const handleKeyDown = async () => {
       setKeyboardEvents((prev) => prev + 1)
@@ -297,9 +276,11 @@ function TestContent() {
         })
       }
     }
+
     document.addEventListener("keydown", handleKeyDown)
     return () => document.removeEventListener("keydown", handleKeyDown)
   }, [sessionId, keyboardEvents, supabase])
+
   const checkAnswer = () => {
     const q = currentQ as any
     
@@ -310,14 +291,14 @@ function TestContent() {
       case "fill_in_blank":
         return fillInAnswers.every((answer, index) => {
           const normalized = answer.toLowerCase().trim()
-          const correctOptions = Array.isArray(q.correctAnswers[index])
-            ? q.correctAnswers[index]
+          const correctOptions = Array.isArray(q.correctAnswers[index]) 
+            ? q.correctAnswers[index] 
             : [q.correctAnswers[index]]
           return correctOptions.some((opt: string) => opt.toLowerCase() === normalized)
         })
       
       case "matching":
-        return q.pairs.every((pair: any) =>
+        return q.pairs.every((pair: any) => 
           matchingAnswers[pair.left] === pair.right
         )
       
@@ -328,6 +309,7 @@ function TestContent() {
         return false
     }
   }
+
   const getCurrentAnswer = () => {
     const q = currentQ as any
     
@@ -344,6 +326,7 @@ function TestContent() {
         return ""
     }
   }
+
   const handleNextQuestion = async () => {
     const answer = getCurrentAnswer()
     
@@ -351,8 +334,10 @@ function TestContent() {
       alert("Bitte beantworte die Frage.")
       return
     }
+
     const responseTime = Date.now() - questionStartTime
     const isCorrect = checkAnswer()
+
     await supabase.from("test_responses").insert({
       session_id: sessionId,
       question_number: currentQuestion + 1,
@@ -360,6 +345,7 @@ function TestContent() {
       response_time: responseTime,
       is_correct: isCorrect,
     })
+
     if (responseTime < 2000 || responseTime > 60000) {
       await supabase.from("behavioral_data").insert({
         session_id: sessionId,
@@ -367,22 +353,26 @@ function TestContent() {
         data: { response_time: responseTime, question: currentQuestion + 1 },
       })
     }
+
     await supabase.from("behavioral_data").insert({
       session_id: sessionId,
       event_type: "response_latency",
       data: { response_time: responseTime, question: currentQuestion + 1 },
     })
-    if (currentQuestion < shuffledQuestions.length - 1) {
+
+    if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1)
       setQuestionStartTime(Date.now())
     } else {
       await completeTest()
     }
   }
+
   const completeTest = async () => {
     const { data: cheatScoreData } = await supabase.rpc("calculate_cheat_score", {
       p_session_id: sessionId,
     })
+
     await supabase
       .from("test_sessions")
       .update({
@@ -391,8 +381,10 @@ function TestContent() {
         completed: true,
       })
       .eq("id", sessionId)
+
     router.push(`/results?sessionId=${sessionId}&participantId=${participantId}`)
   }
+
   const moveItem = (index: number, direction: "up" | "down") => {
     const newItems = [...orderingItems]
     const newIndex = direction === "up" ? index - 1 : index + 1
@@ -402,26 +394,23 @@ function TestContent() {
       setOrderingItems(newItems)
     }
   }
-  
-  // Hilfsvariable für die gemischten Optionen der aktuellen Matching-Frage
-  const currentMatchingOptions = (currentQ.type === "matching" && shuffledMatchingOptions[currentQuestion]) 
-    ? shuffledMatchingOptions[currentQuestion] 
-    : (currentQ as any).options || [];
-  
-  const progress = ((currentQuestion + 1) / shuffledQuestions.length) * 100
+
+  const progress = ((currentQuestion + 1) / questions.length) * 100
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle className="text-2xl">
-            Frage {currentQuestion + 1} von {shuffledQuestions.length}
+            Frage {currentQuestion + 1} von {questions.length}
           </CardTitle>
           <Progress value={progress} className="mt-2" />
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">{currentQ.question}</h3>
-            {/* Multiple Choice (bleibt gleich) */}
+
+            {/* Multiple Choice */}
             {currentQ.type === "multiple_choice" && (
               <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer}>
                 {(currentQ as any).options.map((option: string, index: number) => (
@@ -434,7 +423,8 @@ function TestContent() {
                 ))}
               </RadioGroup>
             )}
-            {/* Fill in the Blank (bleibt gleich) */}
+
+            {/* Fill in the Blank */}
             {currentQ.type === "fill_in_blank" && (
               <div className="space-y-3">
                 {(currentQ as any).hint && (
@@ -458,7 +448,8 @@ function TestContent() {
                 ))}
               </div>
             )}
-            {/* Matching (GEÄNDERT) */}
+
+            {/* Matching */}
             {currentQ.type === "matching" && (
               <div className="space-y-3">
                 {(currentQ as any).pairs.map((pair: any, index: number) => (
@@ -476,16 +467,16 @@ function TestContent() {
                       className="flex-1 p-3 border rounded-md"
                     >
                       <option value="">Wähle...</option>
-                      {/* NEU: Verwenden des gemischten Options-Arrays */}
-                      {currentMatchingOptions.map((option: string, i: number) => (
-                        <option key={i} value={option}>{option}</option>
+                      {(currentQ as any).pairs.map((p: any, i: number) => (
+                        <option key={i} value={p.right}>{p.right}</option>
                       ))}
                     </select>
                   </div>
                 ))}
               </div>
             )}
-            {/* Ordering (bleibt gleich) */}
+
+            {/* Ordering */}
             {currentQ.type === "ordering" && (
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
@@ -524,9 +515,11 @@ function TestContent() {
               </div>
             )}
           </div>
+
           <Button onClick={handleNextQuestion} className="w-full" size="lg">
-            {currentQuestion < shuffledQuestions.length - 1 ? "Nächste Frage" : "Test abschließen"}
+            {currentQuestion < questions.length - 1 ? "Nächste Frage" : "Test abschließen"}
           </Button>
+
           <div className="text-xs text-muted-foreground text-center">
             Ihre Interaktionen werden für Forschungszwecke aufgezeichnet.
           </div>
@@ -535,6 +528,7 @@ function TestContent() {
     </div>
   )
 }
+
 export default function TestPage() {
   return (
     <Suspense fallback={<div>Lädt...</div>}>
