@@ -241,10 +241,12 @@ export default function AdminDashboard() {
                       <TableCell>
                         <span
                           className={`font-bold ${
-                            result.cheat_score > 50
+                            result.cheat_score > 80
                               ? "text-red-600"
-                              : result.cheat_score > 25
+                              : result.cheat_score > 60
                                 ? "text-orange-600"
+                                : result.cheat_score > 30
+                                ? "text-yellow-600"
                                 : "text-green-600"
                           }`}
                         >
@@ -275,15 +277,19 @@ export default function AdminDashboard() {
           <CardContent className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-green-600 rounded"></div>
-              <span className="text-sm">0-25: Niedriges Betrugsrisiko</span>
+              <span className="text-sm">0-30: unauffällig</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-orange-600 rounded"></div>
-              <span className="text-sm">25-50: Mittleres Betrugsrisiko</span>
+              <div className="w-4 h-4 bg-yellow-600 rounded"></div>
+              <span className="text-sm">30–60: leicht verdächtig</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-red-600 rounded"></div>
-              <span className="text-sm">50-100: Hohes Betrugsrisiko</span>
+              <span className="text-sm">60-80: moderat verdächtig</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-red-600 rounded"></div>
+              <span className="text-sm">80-100: wahrscheinlich Cheating</span>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
               Der Cheat-Score basiert auf 7 gewichteten Verhaltensmetriken: Tab-Wechsel (20%), Copy/Paste (15%),

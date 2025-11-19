@@ -45,13 +45,10 @@ BEGIN
 
   -- Berechne Cheat-Score mit Gewichtungen
   v_cheat_score := 
-    (LEAST(v_tab_switches, 10) * 0.20 * 10) +           -- max 20 Punkte
-    (LEAST(v_copy_paste, 10) * 0.15 * 10) +             -- max 15 Punkte
-    (LEAST(v_time_anomalies, 10) * 0.15 * 10) +         -- max 15 Punkte
-    (LEAST(v_response_latency_avg / 100, 10) * 0.10 * 10) + -- max 10 Punkte
-    (LEAST(v_mouse_movements / 10, 10) * 0.10 * 10) +   -- max 10 Punkte
-    (LEAST(v_keyboard_patterns, 10) * 0.15 * 10) +      -- max 15 Punkte
-    (LEAST(v_focus_losses, 10) * 0.15 * 10);            -- max 15 Punkte
+    (v_tab_switches * 10) +
+    (v_copy_paste * 15) +
+    (v_focus_losses * 5) +
+    (v_suspicious_combination * 50);
 
   RETURN LEAST(v_cheat_score, 100.00);
 END;
