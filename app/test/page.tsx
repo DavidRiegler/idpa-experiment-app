@@ -172,12 +172,35 @@ function TestContent() {
   const [focusLosses, setFocusLosses] = useState(0)
   const [mouseMovements, setMouseMovements] = useState(0)
   const [keyboardEvents, setKeyboardEvents] = useState(0)
+  const [randomizedQuestions, setRandomizedQuestions] = useState<any[]>([])
 
   const supabase = createClient()
-  const currentQ = questions[currentQuestion]
+
+  // Randomize questions on mount
+  useEffect(() => {
+    const shuffleArray = (array: any[]) => [...array].sort(() => Math.random() - 0.5)
+
+    const randomized = shuffleArray(questions).map(q => {
+      if (q.type === "multiple_choice") {
+        return { ...q, options: shuffleArray(q.options) }
+      }
+      if (q.type === "matching") {
+        return { ...q, options: shuffleArray(q.options) }
+      }
+      if (q.type === "ordering") {
+        return { ...q, options: shuffleArray(q.options) }
+      }
+      return q
+    })
+
+    setRandomizedQuestions(randomized)
+  }, [])
+
+  const currentQ = randomizedQuestions[currentQuestion]
 
   // Reset answers when question changes
   useEffect(() => {
+    if (!currentQ) return
     setSelectedAnswer("")
     setFillInAnswers([])
     setMatchingAnswers({})
@@ -192,7 +215,7 @@ function TestContent() {
         return prev
       })
     }
-  }, [currentQuestion])
+  }, [currentQuestion, currentQ])
 
   // Verhaltens-Tracking: Tab-Wechsel
   useEffect(() => {
@@ -360,7 +383,7 @@ function TestContent() {
       data: { response_time: responseTime, question: currentQuestion + 1 },
     })
 
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < randomizedQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1)
       setQuestionStartTime(Date.now())
     } else {
@@ -395,14 +418,22 @@ function TestContent() {
     }
   }
 
-  const progress = ((currentQuestion + 1) / questions.length) * 100
+  const progress = ((currentQuestion + 1) / randomizedQuestions.length) * 100
+
+  if (randomizedQuestions.length === 0) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div>Lädt Fragen...</div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle className="text-2xl">
-            Frage {currentQuestion + 1} von {questions.length}
+            Frage {currentQuestion + 1} von {randomizedQuestions.length}
           </CardTitle>
           <Progress value={progress} className="mt-2" />
         </CardHeader>
@@ -467,8 +498,8 @@ function TestContent() {
                       className="flex-1 p-3 border rounded-md"
                     >
                       <option value="">Wähle...</option>
-                      {(currentQ as any).pairs.map((p: any, i: number) => (
-                        <option key={i} value={p.right}>{p.right}</option>
+                      {(currentQ as any).options.map((opt: string, i: number) => (
+                        <option key={i} value={opt}>{opt}</option>
                       ))}
                     </select>
                   </div>
@@ -517,7 +548,7 @@ function TestContent() {
           </div>
 
           <Button onClick={handleNextQuestion} className="w-full" size="lg">
-            {currentQuestion < questions.length - 1 ? "Nächste Frage" : "Test abschließen"}
+            {currentQuestion < randomizedQuestions.length - 1 ? "Nächste Frage" : "Test abschliessen"}
           </Button>
 
           <div className="text-xs text-muted-foreground text-center">
