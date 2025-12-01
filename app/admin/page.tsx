@@ -62,7 +62,7 @@ export default function AdminDashboard() {
         .order("cheat_score", { ascending: false, nullsFirst: false })
 
       if (error) {
-        console.error("[v0] Error fetching results:", error)
+        console.error("Error fetching results:", error)
       } else {
         const formattedResults = data.map((session: any) => ({
           id: session.id,

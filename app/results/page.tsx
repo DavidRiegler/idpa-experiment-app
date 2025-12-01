@@ -47,7 +47,7 @@ function ResultsContent() {
         .single()
 
       if (error) {
-        console.error("[v0] Error fetching session data:", error)
+        console.error("Error fetching session data:", error)
       } else {
         setSessionData(data)
       }

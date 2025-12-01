@@ -53,7 +53,7 @@ export default function HomePage() {
       // Navigiere zum Test
       router.push(`/test?sessionId=${session.id}&participantId=${participant.id}`)
     } catch (error) {
-      console.error("[v0] Error creating participant:", error)
+      console.error("Error creating participant:", error)
       alert("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.")
     } finally {
       setIsLoading(false)
