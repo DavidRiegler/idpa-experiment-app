@@ -496,6 +496,7 @@ function TestContent() {
                         [pair.left]: e.target.value
                       })}
                       className="flex-1 p-3 border rounded-md"
+                      aria-label={`Ordne ${pair.left} zu`}
                     >
                       <option value="">Wähle...</option>
                       {(currentQ as any).options.map((opt: string, i: number) => (
