@@ -16,7 +16,7 @@ const questions = [
   {
     type: "multiple_choice",
     question: "Welches chemische Element hat das Symbol 'Fe'?",
-    options: ["Eisen", "Fluor", "Ferrum", "Phosphor"],
+    options: ["Eisen", "Fluor", "Ferum", "Phosphor"],
     correct: "Eisen",
   },
   {
