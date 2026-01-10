@@ -1,0 +1,68 @@
+DECLARE
+  v_tab_switches integer := 0;
+  v_copy_paste integer := 0;
+  v_time_anomalies integer := 0;
+  v_response_latency_avg numeric := 0;
+  v_mouse_movements integer := 0;
+  v_keyboard_patterns integer := 0;
+  v_focus_losses integer := 0;
+  v_suspicious_combination integer := 0;
+  v_cheat_score numeric := 0;
+BEGIN
+  SELECT COUNT(*) INTO v_tab_switches
+  FROM behavioral_data
+  WHERE session_id = p_session_id AND event_type = 'tab_switch';
+
+  SELECT COUNT(*) INTO v_copy_paste
+  FROM behavioral_data
+  WHERE session_id = p_session_id AND event_type = 'copy_paste';
+
+  SELECT COUNT(*) INTO v_time_anomalies
+  FROM behavioral_data
+  WHERE session_id = p_session_id AND event_type = 'time_anomaly';
+
+  SELECT COUNT(*) INTO v_mouse_movements
+  FROM behavioral_data
+  WHERE session_id = p_session_id AND event_type = 'mouse_movement';
+
+  SELECT COUNT(*) INTO v_keyboard_patterns
+  FROM behavioral_data
+  WHERE session_id = p_session_id AND event_type = 'keyboard_pattern';
+
+  SELECT COUNT(*) INTO v_focus_losses
+  FROM behavioral_data
+  WHERE session_id = p_session_id AND event_type = 'focus_loss';
+
+  -- Durchschnittliche Antwortzeit vorrangig aus test_responses
+  SELECT COALESCE(AVG(response_time),0) INTO v_response_latency_avg
+  FROM test_responses
+  WHERE session_id = p_session_id;
+
+  -- Fallback: response_time im JSON in behavioral_data
+  IF v_response_latency_avg = 0 THEN
+    SELECT COALESCE(AVG( (data->>'response_time')::numeric ), 0) INTO v_response_latency_avg
+    FROM behavioral_data
+    WHERE session_id = p_session_id AND event_type = 'response_latency' AND (data->>'response_time') IS NOT NULL;
+  END IF;
+
+  -- Beispiel-Kriterium für suspicious combination
+  IF v_tab_switches > 5 AND v_copy_paste > 0 THEN
+    v_suspicious_combination := 1;
+  ELSE
+    v_suspicious_combination := 0;
+  END IF;
+
+  v_cheat_score := 
+    (v_tab_switches * 10) +
+    (v_copy_paste * 15) +
+    (v_focus_losses * 5) +
+    (v_suspicious_combination * 50);
+
+  IF v_cheat_score > 100 THEN
+    v_cheat_score := 100;
+  END IF;
+
+  RAISE NOTICE 'score components: tabs=%, copy=%, focus=%, suspicious=%, avg_resp=%', v_tab_switches, v_copy_paste, v_focus_losses, v_suspicious_combination, v_response_latency_avg;
+
+  RETURN round(v_cheat_score::numeric,2);
+END;
